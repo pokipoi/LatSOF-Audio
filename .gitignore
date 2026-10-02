@@ -1,0 +1,7 @@
+# build artifacts
+*.o
+*.kext/
+.DS_Store
+
+# firmware blob (fetched from thesofproject/sof-bin at build time)
+kext/LatSOFAudio/Firmware/*.ri
