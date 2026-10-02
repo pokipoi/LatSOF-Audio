@@ -63,7 +63,7 @@ Key design point: **coexistence**. AppleHDA keeps full ownership of the codec (s
 ## Build
 
 ```bash
-git clone https://github.com/<you>/LatSOF-Audio.git
+git clone https://github.com/pokipoi/LatSOF-Audio.git
 cd LatSOF-Audio/kext
 # drop your firmware in place:
 cp ~/Downloads/sof-cml.ri LatSOFAudio/Firmware/
