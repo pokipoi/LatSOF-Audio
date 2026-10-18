@@ -1,0 +1,50 @@
+name: Build LatSOFAudio.kext  
+  
+on:   
+  workflow_dispatch:  
+
+jobs:  
+  build:  
+    runs-on: macos-latest
+    steps:  
+      - uses: actions/checkout@v4  
+  
+      - name: Install Command Line Tools deps  
+        run: |  
+          clang --version  
+          ls /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Kernel.framework/Headers  
+  
+      - name: Fetch SOF firmware (sof-cml.ri)  
+        run: |  
+          mkdir -p kext/LatSOFAudio/Firmware  
+          curl -L -o sof-bin.tar.gz https://github.com/thesofproject/sof-bin/releases/download/v2026.09.2/sof-bin-2026.09.2.tar.gz 
+          tar -xzf sof-bin.tar.gz   
+          
+          # 使用 find 动态定位固件，防止解压出的根目录带有 v 或版本号导致 cp 失败
+          TARGET_FW=$(find . -name "sof-cnl.ri" | grep "intel-signed" | head -n 1)
+          if [ -z "$TARGET_FW" ]; then
+            echo "Error: sof-cnl.ri not found in downloaded archive!"
+            exit 1
+          fi
+          echo "Found firmware at: $TARGET_FW"
+          cp "$TARGET_FW" kext/LatSOFAudio/Firmware/sof-cml.ri  
+          ls -lL kext/LatSOFAudio/Firmware/sof-cml.ri 
+  
+      - name: Build kext  
+        run: make -C kext  
+  
+      - name: Verify artifacts  
+        run: |  
+          file kext/LatSOFAudio.kext/Contents/MacOS/LatSOFAudio  
+          lipo -info kext/LatSOFAudio.kext/Contents/MacOS/LatSOFAudio   # 应为 x86_64  
+  
+      - name: Compress Kext to preserve permissions
+        run: |
+          # 将 kext 目录打包打包压缩，防止 Actions 直接上传打包目录导致其内部执行权限丢失
+          tar -czf LatSOFAudio.kext.tar.gz -C kext LatSOFAudio.kext
+          ls -lh LatSOFAudio.kext.tar.gz
+          
+      - uses: actions/upload-artifact@v4  
+        with:  
+          name: LatSOFAudio-Release  
+          path: LatSOFAudio.kext.tar.gz
